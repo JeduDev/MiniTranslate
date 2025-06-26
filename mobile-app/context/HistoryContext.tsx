@@ -19,7 +19,6 @@ interface HistoryContextType {
   addHistoryEntry: (entry: Omit<HistoryEntry, 'id' | 'is_favorite'>) => Promise<void>;
   updateHistoryName: (id: string, name: string) => Promise<void>;
   deleteHistoryEntry: (id: string) => Promise<void>;
-  clearAllHistory: () => Promise<void>;
   toggleFavorite: (id: string) => Promise<void>;
 }
 
@@ -132,24 +131,21 @@ export const HistoryProvider = ({ children }: { children: ReactNode }) => {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Failed to delete history entry');
+      
+      if (!response.ok) {
+        let errorDetails = 'Failed to delete entry';
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            const errorData = await response.json();
+            errorDetails = errorData.error || errorDetails;
+        }
+        throw new Error(errorDetails);
+      }
+
       setHistory((prev) => prev.filter(item => item.id !== id));
     } catch (error) {
       console.error(`Error deleting history entry with id ${id}:`, error);
-    }
-  };
-
-  const clearAllHistory = async () => {
-    if (!token) return;
-    try {
-      const response = await fetch(`${API_URL}/api/history/all`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to clear history');
-    setHistory([]);
-    } catch (error) {
-      console.error('Error clearing all history:', error);
+      throw error; // Lanza el error para que la UI lo atrape
     }
   };
 
@@ -161,7 +157,6 @@ export const HistoryProvider = ({ children }: { children: ReactNode }) => {
       addHistoryEntry,
       updateHistoryName,
       deleteHistoryEntry,
-      clearAllHistory,
       toggleFavorite
     }}>
       {children}

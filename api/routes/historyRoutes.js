@@ -16,9 +16,6 @@ router.put('/:id', authenticateToken, historyController.updateHistoryEntryName);
 // Eliminar una entrada específica del historial
 router.delete('/:id', authenticateToken, historyController.deleteHistoryEntry);
 
-// Eliminar todo el historial del usuario
-router.delete('/all', authenticateToken, historyController.clearAllHistory);
-
 // Marcar/desmarcar como favorito
 router.patch('/:id/favorite', authenticateToken, historyController.toggleFavoriteStatus);
 

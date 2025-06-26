@@ -131,8 +131,7 @@ export default function RegisterScreen() {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <ThemedView style={styles.container}>
-        <ThemedText type="title" style={styles.title}>MiniTranslate</ThemedText>
-        <ThemedText style={styles.subtitle}>Crear una cuenta</ThemedText>
+        <ThemedText type="title" style={styles.title}>Crear Cuenta</ThemedText>
 
         {errorMessage ? (
           <View style={styles.errorContainer}>
@@ -143,7 +142,7 @@ export default function RegisterScreen() {
         <View style={styles.formContainer}>
           <TextInput
             style={[styles.input, { backgroundColor: inputBgColor, borderColor, color: textColor }]}
-            placeholder="Nombre completo"
+            placeholder="Nombre"
             placeholderTextColor={placeholderColor}
             value={name}
             onChangeText={setName}
@@ -151,7 +150,7 @@ export default function RegisterScreen() {
           />
           <TextInput
             style={[styles.input, { backgroundColor: inputBgColor, borderColor, color: textColor }]}
-            placeholder="Correo electrónico"
+            placeholder="Correo"
             placeholderTextColor={placeholderColor}
             value={email}
             onChangeText={setEmail}
@@ -168,7 +167,7 @@ export default function RegisterScreen() {
           />
           <TextInput
             style={[styles.input, { backgroundColor: inputBgColor, borderColor, color: textColor }]}
-            placeholder="Confirmar contraseña"
+            placeholder="Confirmar"
             placeholderTextColor={placeholderColor}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
@@ -183,16 +182,13 @@ export default function RegisterScreen() {
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <ThemedText style={styles.buttonText}>Registrarse</ThemedText>
+              <ThemedText style={styles.buttonText}>Registrar</ThemedText>
             )}
           </TouchableOpacity>
 
-          <View style={styles.loginContainer}>
-            <ThemedText>¿Ya tienes una cuenta? </ThemedText>
-            <TouchableOpacity onPress={navigateToLogin}>
-              <ThemedText style={styles.loginText}>Iniciar sesión</ThemedText>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={navigateToLogin} style={styles.loginButton}>
+            <ThemedText style={styles.loginText}>¿Ya tienes cuenta?</ThemedText>
+          </TouchableOpacity>
         </View>
       </ThemedView>
     </ScrollView>
@@ -202,53 +198,52 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
+    justifyContent: 'center',
   },
   container: {
     flex: 1,
-    padding: 24,
+    padding: 20,
     justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   formContainer: {
     width: '100%',
   },
   input: {
-    height: 50,
+    height: 55,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 15,
     marginBottom: 16,
     paddingHorizontal: 16,
+    fontSize: 16,
   },
   button: {
     backgroundColor: '#0a84ff',
-    height: 50,
-    borderRadius: 8,
+    height: 55,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 10,
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
   },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
+  loginButton: {
+    marginTop: 20,
+    padding: 10,
   },
   loginText: {
     color: '#0a84ff',
     fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: 16,
   },
   errorContainer: {
     backgroundColor: 'rgba(255, 0, 0, 0.1)',
@@ -261,5 +256,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     textAlign: 'center',
+    fontSize: 14,
   },
 }); 

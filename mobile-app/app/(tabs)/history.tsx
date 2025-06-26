@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Text, TouchableOpacity, Alert, Modal, Pressable, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, FlatList, Text, TouchableOpacity, Alert, TextInput, ActivityIndicator, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -37,6 +37,27 @@ function HistoryItem({
     setIsEditing(false);
   };
 
+  const handleDelete = async () => {
+    Alert.alert(
+      "Confirmar Eliminación",
+      "¿Estás seguro de que quieres eliminar esta entrada del historial?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Sí, Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await onDelete(item.id);
+            } catch (error) {
+              Alert.alert('Error', error instanceof Error ? error.message : 'No se pudo eliminar la entrada.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={[styles.itemContainer, { backgroundColor: cardBgColor, borderColor: cardBorderColor }]}>
       <View style={styles.itemHeader}>
@@ -61,9 +82,9 @@ function HistoryItem({
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)} style={styles.editButton}>
               <Ionicons name={isEditing ? "checkmark-circle" : "pencil"} size={18} color={editIconColor} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.deleteButton}>
-          <Ionicons name="trash-outline" size={18} color={iconColor} />
-        </TouchableOpacity>
+            <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
+              <Ionicons name="trash-outline" size={18} color={iconColor} />
+            </TouchableOpacity>
         </View>
       </View>
       <Text style={[styles.langIndicator, { color: indicatorColor }]}>
@@ -80,15 +101,14 @@ function HistoryItem({
 }
 
 export default function HistoryScreen() {
-  const { history, isLoading, deleteHistoryEntry, clearAllHistory, updateHistoryName, toggleFavorite } = useHistory();
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const { history, isLoading, deleteHistoryEntry, updateHistoryName, toggleFavorite } = useHistory();
   const [activeTab, setActiveTab] = useState<'history' | 'favorites'>('history');
   
-  const colorScheme = useThemeColor({}, 'background') === Colors.light.background ? 'light' : 'dark';
-  const modalBgColor = colorScheme === 'light' ? 'white' : '#222';
-  const buttonColor = colorScheme === 'light' ? '#f0f0f0' : '#333';
-  const dangerColor = '#ff6b6b';
-  const cancelColor = colorScheme === 'light' ? '#0a84ff' : '#0a84ff';
+  const colorScheme = useColorScheme();
+  const activeTabColor = Colors.light.tint;
+  const inactiveTabColor = colorScheme === 'dark' ? '#333' : '#eee';
+  const activeTextColor = 'white';
+  const inactiveTextColor = colorScheme === 'dark' ? '#ccc' : '#555';
 
   const displayedHistory = useMemo(() => {
     if (activeTab === 'favorites') {
@@ -96,11 +116,6 @@ export default function HistoryScreen() {
     }
     return history;
   }, [history, activeTab]);
-
-  const handleClearAll = async () => {
-    await clearAllHistory();
-    setShowConfirmModal(false);
-  };
 
   if (isLoading) {
     return (
@@ -112,27 +127,18 @@ export default function HistoryScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText type="title" style={styles.title}>Historial</ThemedText>
-        {history.length > 0 && (
-          <TouchableOpacity style={styles.clearAllButton} onPress={() => setShowConfirmModal(true)}>
-            <Ionicons name="trash-outline" size={22} color={dangerColor} />
-          </TouchableOpacity>
-        )}
-      </View>
-      
       <View style={styles.tabContainer}>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'history' && styles.activeTab]}
+          style={[styles.tab, { backgroundColor: activeTab === 'history' ? activeTabColor : inactiveTabColor }]}
           onPress={() => setActiveTab('history')}
         >
-          <Text style={[styles.tabText, activeTab === 'history' && styles.activeTabText]}>Historial</Text>
+          <Ionicons name="time-outline" size={20} color={activeTab === 'history' ? activeTextColor : inactiveTextColor} />
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
+          style={[styles.tab, { backgroundColor: activeTab === 'favorites' ? activeTabColor : inactiveTabColor }]}
           onPress={() => setActiveTab('favorites')}
         >
-          <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>Favoritos</Text>
+          <Ionicons name="star-outline" size={20} color={activeTab === 'favorites' ? activeTextColor : inactiveTextColor} />
         </TouchableOpacity>
       </View>
 
@@ -156,30 +162,6 @@ export default function HistoryScreen() {
           contentContainerStyle={styles.listContentContainer}
         />
       )}
-
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showConfirmModal}
-        onRequestClose={() => setShowConfirmModal(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={[styles.modalView, { backgroundColor: modalBgColor }]}>
-            <ThemedText style={styles.modalTitle}>Limpiar Historial</ThemedText>
-            <ThemedText style={styles.modalText}>
-              ¿Estás seguro de que quieres eliminar todo el historial de traducciones? Esta acción no se puede deshacer.
-            </ThemedText>
-            <View style={styles.modalButtons}>
-              <Pressable style={[styles.button, { backgroundColor: buttonColor }]} onPress={() => setShowConfirmModal(false)}>
-                <Text style={[styles.buttonText, { color: cancelColor }]}>Cancelar</Text>
-              </Pressable>
-              <Pressable style={[styles.button, { backgroundColor: buttonColor }]} onPress={handleClearAll}>
-                <Text style={[styles.buttonText, { color: dangerColor }]}>Eliminar Todo</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </ThemedView>
   );
 }
@@ -187,59 +169,43 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    position: 'relative',
-  },
-  title: {
-    textAlign: 'center',
-    flex: 1,
-  },
-  clearAllButton: {
-    position: 'absolute',
-    right: 16,
-    padding: 8,
+    paddingTop: 25,
   },
   listContentContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 8,
+    paddingBottom: 20,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 10,
     gap: 8,
   },
   itemContainer: {
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
+    borderRadius: 15,
     borderWidth: 1,
   },
   itemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     flex: 1,
   },
   nameInput: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: 10,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 16,
+    paddingVertical: 2,
+    fontSize: 15,
     marginRight: 8,
   },
   headerActions: {
@@ -247,86 +213,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   favoriteButton: {
-    padding: 4,
+    padding: 8,
   },
   editButton: {
-    padding: 4,
-    marginHorizontal: 4,
+    padding: 8,
   },
   deleteButton: {
-    padding: 4,
+    padding: 8,
   },
   langIndicator: {
-    fontSize: 12,
+    fontSize: 11,
     fontStyle: 'italic',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   textOriginal: {
     fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   textTranslated: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalView: {
-    margin: 20,
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  modalText: {
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  button: {
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    minWidth: '45%',
-    alignItems: 'center',
-  },
-  buttonText: {
-      fontWeight: 'bold',
   },
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    marginBottom: 12,
+    gap: 20,
   },
   tab: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: '#eee',
-    marginHorizontal: 8,
-  },
-  activeTab: {
-    backgroundColor: Colors.light.tint,
-  },
-  tabText: {
-    color: '#333',
-    fontWeight: '600',
-  },
-  activeTabText: {
-    color: 'white',
+    padding: 12,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

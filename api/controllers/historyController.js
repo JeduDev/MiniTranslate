@@ -6,10 +6,24 @@ const getHistory = async (req, res) => {
   const userId = req.user.id;
   try {
     const result = await client.execute({
-      sql: 'SELECT * FROM translation_history WHERE user_id = ? ORDER BY created_at DESC',
+      sql: 'SELECT id, user_id, name, from_text, to_text, from_lang, to_lang, is_favorite, created_at FROM translation_history WHERE user_id = ? ORDER BY created_at DESC',
       args: [userId],
     });
-    res.json(result.rows);
+
+    // Mapea los resultados para que coincidan con la interfaz del frontend (camelCase)
+    const history = result.rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      fromText: row.from_text,
+      toText: row.to_text,
+      fromLang: row.from_lang,
+      toLang: row.to_lang,
+      is_favorite: Boolean(row.is_favorite),
+      createdAt: row.created_at
+    }));
+
+    res.json(history);
   } catch (error) {
     console.error('Error getting history:', error);
     res.status(500).json({ error: 'Failed to get history' });
@@ -95,22 +109,6 @@ const deleteHistoryEntry = async (req, res) => {
   }
 };
 
-// Limpiar todo el historial de un usuario
-const clearAllHistory = async (req, res) => {
-  const userId = req.user.id;
-
-  try {
-    await client.execute({
-      sql: 'DELETE FROM translation_history WHERE user_id = ?',
-      args: [userId],
-    });
-    res.status(200).json({ message: 'All history cleared successfully' });
-  } catch (error) {
-    console.error('Error clearing history:', error);
-    res.status(500).json({ error: 'Failed to clear history' });
-  }
-};
-
 // Marcar/desmarcar una entrada como favorita
 const toggleFavoriteStatus = async (req, res) => {
   const { id } = req.params;
@@ -147,6 +145,5 @@ module.exports = {
   addHistoryEntry,
   updateHistoryEntryName,
   deleteHistoryEntry,
-  clearAllHistory,
   toggleFavoriteStatus,
 }; 
