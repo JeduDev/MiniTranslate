@@ -5,6 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "build": "echo 'Build script for Vercel'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

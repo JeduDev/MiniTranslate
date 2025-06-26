@@ -1,0 +1,10 @@
+# Ignorar la aplicación móvil, no es parte de la API
+mobile-app/
+
+# Ignorar las dependencias locales, Vercel las instalará
+api/node_modules
+node_modules
+
+# Ignorar archivos de entorno local
+.env
+*.env.local 

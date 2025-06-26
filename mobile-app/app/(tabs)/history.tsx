@@ -52,7 +52,7 @@ function HistoryItem({
         ) : (
           <Text style={[styles.itemName, { color: textColor }]} onPress={() => setIsEditing(true)}>
             {item.name || 'Sin nombre'}
-          </Text>
+        </Text>
         )}
         <View style={styles.headerActions}>
             <TouchableOpacity onPress={() => onToggleFavorite(item.id)} style={styles.favoriteButton}>
@@ -62,8 +62,8 @@ function HistoryItem({
               <Ionicons name={isEditing ? "checkmark-circle" : "pencil"} size={18} color={editIconColor} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => onDelete(item.id)} style={styles.deleteButton}>
-              <Ionicons name="trash-outline" size={18} color={iconColor} />
-            </TouchableOpacity>
+          <Ionicons name="trash-outline" size={18} color={iconColor} />
+        </TouchableOpacity>
         </View>
       </View>
       <Text style={[styles.langIndicator, { color: indicatorColor }]}>
