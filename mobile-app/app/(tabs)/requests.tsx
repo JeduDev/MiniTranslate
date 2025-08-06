@@ -5,6 +5,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useFocusEffect } from 'expo-router';
 import { sendPushNotifications } from '@/hooks/usePushNotifications';
+import { API_URL } from '@/constants/api';
 
 interface AdminRequest {
   id: number;
@@ -19,7 +20,7 @@ export default function AdminRequestsScreen() {
 
   const fetchRequests = async () => {
     try {
-      const response = await fetch('http://192.168.1.2:3000/api/admin/requests', {
+      const response = await fetch(`${API_URL}/api/admin/requests`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -47,7 +48,7 @@ export default function AdminRequestsScreen() {
     try {
       // 1. Aprobar la solicitud en el servidor
       console.log(`Aprobando solicitud: userId=${userId}, requestId=${requestId}`);
-      const response = await fetch('http://192.168.1.2:3000/api/admin/approve', {
+      const response = await fetch(`${API_URL}/api/admin/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +72,7 @@ export default function AdminRequestsScreen() {
         try {
           // 2. Obtener el token del usuario aprobado
           console.log(`Obteniendo token para usuario ${userId}`);
-          const userResponse = await fetch(`http://192.168.1.2:3000/api/users/${userId}/push-token`, {
+          const userResponse = await fetch(`${API_URL}/api/users/${userId}/push-token`, {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -119,7 +120,7 @@ export default function AdminRequestsScreen() {
 
   const handleReject = async (requestId: number) => {
     try {
-      const response = await fetch('http://192.168.1.2:3000/api/admin/reject', {
+      const response = await fetch(`${API_URL}/api/admin/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,4 +199,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
   }
-}); 
+});

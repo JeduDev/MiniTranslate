@@ -9,6 +9,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const historyRoutes = require('./routes/historyRoutes');
+const statisticsRoutes = require('./routes/statisticsRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/statistics', statisticsRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -58,4 +60,4 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-}); 
+});

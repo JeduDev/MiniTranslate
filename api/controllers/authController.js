@@ -40,9 +40,10 @@ async function register(req, res) {
     console.log('Inserting new user into database');
     
     // Insert user into database with push token if provided
+    const currentDate = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
     const insertResult = await client.execute({
-      sql: 'INSERT INTO users (name, email, password, push_token) VALUES (?, ?, ?, ?)',
-      args: [name, email, hashedPassword, push_token || null]
+      sql: 'INSERT INTO users (name, email, password, push_token, fecha) VALUES (?, ?, ?, ?, ?)',
+      args: [name, email, hashedPassword, push_token || null, currentDate]
     });
     
     console.log(`Insert result: ${JSON.stringify(insertResult)}`);
@@ -227,4 +228,4 @@ module.exports = {
   getProfile,
   updatePushToken,
   logout
-}; 
+};

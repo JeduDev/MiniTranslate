@@ -1,6 +1,7 @@
 import React, { createContext, ReactNode, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { API_URL } from '@/constants/api';
 
 interface User {
   id: number;
@@ -80,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Llamar al endpoint de logout si hay un token
       if (token) {
         try {
-          await fetch('http://192.168.1.2:3000/api/auth/logout', {
+          await fetch(`${API_URL}/api/auth/logout`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -122,7 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const savePushToken = async (pushToken: string, authToken: string) => {
     try {
-      const response = await fetch('http://192.168.1.2:3000/api/notifications/token', {
+      const response = await fetch(`${API_URL}/api/notifications/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -149,7 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     try {
-      const response = await fetch('http://192.168.1.2:3000/api/notifications/test', {
+      const response = await fetch(`${API_URL}/api/notifications/test`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -195,4 +196,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};

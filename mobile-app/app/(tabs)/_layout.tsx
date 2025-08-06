@@ -54,6 +54,15 @@ export default function TabLayout() {
           }}
         />
       )}
+      {isAdmin && (
+        <Tabs.Screen
+          name="statistics"
+          options={{
+            title: 'Estadísticas',
+            tabBarIcon: ({ color }) => <Ionicons name="bar-chart" size={28} color={color} />,
+          }}
+        />
+      )}
     </Tabs>
   );
 }

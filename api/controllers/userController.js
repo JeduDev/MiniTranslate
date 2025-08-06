@@ -74,9 +74,10 @@ const requestAdminAccess = async (req, res) => {
     }
 
     // Insertar la solicitud de admin
+    const currentDate = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
     await client.execute({
-      sql: 'INSERT INTO admin_requests (user_id) VALUES (?)',
-      args: [userId],
+      sql: 'INSERT INTO admin_requests (user_id, fecha) VALUES (?, ?)',
+      args: [userId, currentDate],
     });
 
     // Ya no enviamos notificaciones desde el servidor
@@ -137,4 +138,4 @@ const getUserPushToken = async (req, res) => {
 module.exports = {
   requestAdminAccess,
   getUserPushToken,
-}; 
+};
