@@ -1,1 +1,1 @@
-export const API_URL = 'https://mini-translate-b9uv-t5g95mye1-jedudevs-projects.vercel.app';
+export const API_URL = 'https://mini-translate-swart.vercel.app';

@@ -44,6 +44,7 @@ export default function TranslateScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isCameraVisible, setIsCameraVisible] = useState(false);
   const cameraRef = useRef<CameraView>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Get theme colors
   const textColor = useThemeColor({}, 'text');
@@ -78,7 +79,7 @@ export default function TranslateScreen() {
     try {
       const from = 'English'; // Fixed source language
       
-      const response = await fetch(`${API_URL}/api/translate/translate`, {
+      const response = await fetch(`${API_URL}/api/public/translate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,6 +158,15 @@ export default function TranslateScreen() {
   };
 
   const transcribeImage = async (base64Image: string) => {
+    // Cancelar cualquier petición anterior si existe
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Crear nuevo controlador
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setIsTranscribing(true);
     setError('');
     
@@ -170,6 +180,7 @@ export default function TranslateScreen() {
         body: JSON.stringify({
           image: base64Image,
         }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -178,10 +189,26 @@ export default function TranslateScreen() {
 
       const data = await response.json();
       setTextToTranslate(data.transcribedText);
-    } catch (e) {
+    } catch (e: any) {
+      if (e.name === 'AbortError') {
+        console.log('Transcription cancelled');
+        return;
+      }
       console.error('Transcription error:', e);
       setError('Failed to transcribe image. Please try again.');
     } finally {
+      // Solo desactivar si no fue abortado o si es el controlador actual
+      if (abortControllerRef.current === controller) {
+        setIsTranscribing(false);
+        abortControllerRef.current = null;
+      }
+    }
+  };
+
+  const cancelTranscription = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
       setIsTranscribing(false);
     }
   };
@@ -261,6 +288,12 @@ export default function TranslateScreen() {
             <View style={styles.transcribingOverlay}>
               <ActivityIndicator size="small" color={textColor} />
               <Text style={[styles.transcribingText, { color: textColor }]}>Transcribing...</Text>
+              <TouchableOpacity 
+                style={[styles.cancelButton, { borderColor: textColor }]} 
+                onPress={cancelTranscription}
+              >
+                <Text style={[styles.cancelButtonText, { color: textColor }]}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -435,5 +468,16 @@ const styles = StyleSheet.create({
   transcribingText: {
     marginTop: 8,
     fontWeight: 'bold',
+  },
+  cancelButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 20,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
