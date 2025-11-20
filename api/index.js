@@ -12,7 +12,7 @@ const historyRoutes = require('./routes/historyRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000
 
 // Middleware
 app.use(cors());
