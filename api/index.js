@@ -36,12 +36,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Catch 404 and forward to error handler
-app.use((req, res, next) => {
-  const error = new Error('Not Found');
-  error.status = 404;
-  next(error);
-});
 
 // Global error handler - asegura que todas las respuestas sean JSON
 app.use((err, req, res, next) => {
