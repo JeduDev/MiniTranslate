@@ -10,4 +10,7 @@ router.post('/translate', authenticateToken, translateController.translateText);
 // Public translation route (no authentication required)
 router.post('/public/translate', translateController.translateText);
 
-module.exports = router; 
+// Transcribe route
+router.post('/transcribe', translateController.transcribeImage);
+
+module.exports = router;

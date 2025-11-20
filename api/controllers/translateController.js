@@ -2,7 +2,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Initialize Gemini API
 const API_KEY = 'AIzaSyA6io4qBKLK2uFQ43aQhKP9bVqj6rUDbeQ';
-const MODEL_NAME = 'gemini-2.5-flash-lite-preview-06-17';
+const MODEL_NAME = 'gemini-2.5-flash-lite';
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
@@ -43,6 +43,37 @@ Texto a traducir: ${text}`;
   }
 }
 
+// Transcribe image
+async function transcribeImage(req, res) {
+  try {
+    const { image } = req.body;
+
+    if (!image) {
+      return res.status(400).json({ error: 'Missing image data' });
+    }
+
+    const prompt = "Transcribe the text from this image exactly as it appears.";
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: image,
+          mimeType: "image/jpeg",
+        },
+      },
+    ]);
+    const response = await result.response;
+    const transcribedText = response.text();
+
+    res.json({ transcribedText });
+  } catch (error) {
+    console.error('Transcription error:', error);
+    res.status(500).json({ error: 'Failed to transcribe image' });
+  }
+}
+
 module.exports = {
-  translateText
-}; 
+  translateText,
+  transcribeImage
+};

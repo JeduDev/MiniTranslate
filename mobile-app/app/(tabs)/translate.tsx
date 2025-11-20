@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View, ScrollView, Alert } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View, ScrollView, Alert, TouchableOpacity, Modal, Image } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as FileSystem from 'expo-file-system';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -10,6 +12,7 @@ import { Colors } from '@/constants/Colors';
 import { useAuth } from '../../context/AuthContext';
 import { useRateLimit } from '@/context/RateLimitContext';
 import { API_URL } from '@/constants/api';
+import { Ionicons } from '@expo/vector-icons';
 
 // Available languages
 const LANGUAGES = [
@@ -30,12 +33,18 @@ export default function TranslateScreen() {
   const [translationName, setTranslationName] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState('');
   const [toLang, setToLang] = useState('Spanish');
   const { addHistoryEntry } = useHistory();
   const { token, isAdmin } = useAuth();
   const { canTranslate, registerTranslation, translationsRemaining, timeUntilReset } = useRateLimit();
   
+  // Camera state
+  const [permission, requestPermission] = useCameraPermissions();
+  const [isCameraVisible, setIsCameraVisible] = useState(false);
+  const cameraRef = useRef<CameraView>(null);
+
   // Get theme colors
   const textColor = useThemeColor({}, 'text');
   const colorScheme = useThemeColor({}, 'background') === Colors.light.background ? 'light' : 'dark';
@@ -111,6 +120,89 @@ export default function TranslateScreen() {
     }
   };
 
+  const openCamera = async () => {
+    if (!permission) {
+      // Permission is still loading
+      return;
+    }
+    
+    if (!permission.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert('Permission required', 'Camera permission is required to use this feature.');
+        return;
+      }
+    }
+    
+    setIsCameraVisible(true);
+  };
+
+  const takePicture = async () => {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.5,
+          base64: true,
+        });
+        
+        if (photo && photo.base64) {
+          setIsCameraVisible(false);
+          transcribeImage(photo.base64);
+        }
+      } catch (e) {
+        console.error('Failed to take picture:', e);
+        Alert.alert('Error', 'Failed to take picture');
+      }
+    }
+  };
+
+  const transcribeImage = async (base64Image: string) => {
+    setIsTranscribing(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/api/translate/transcribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          image: base64Image,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Transcription failed');
+      }
+
+      const data = await response.json();
+      setTextToTranslate(data.transcribedText);
+    } catch (e) {
+      console.error('Transcription error:', e);
+      setError('Failed to transcribe image. Please try again.');
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  if (isCameraVisible) {
+    return (
+      <View style={styles.cameraContainer}>
+        <CameraView style={styles.camera} ref={cameraRef}>
+          <View style={styles.cameraControls}>
+            <TouchableOpacity style={styles.closeButton} onPress={() => setIsCameraVisible(false)}>
+              <Ionicons name="close" size={30} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+              <View style={styles.captureButtonInner} />
+            </TouchableOpacity>
+          </View>
+        </CameraView>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={styles.scrollContainer}
@@ -150,14 +242,27 @@ export default function TranslateScreen() {
         </View>
         
         <View style={styles.inputContainer}>
+          <View style={styles.inputHeader}>
+            <ThemedText style={styles.labelText}>Text to translate:</ThemedText>
+            <TouchableOpacity onPress={openCamera} style={styles.cameraButton}>
+              <Ionicons name="camera" size={24} color={textColor} />
+              <ThemedText style={styles.cameraButtonText}>Scan Text</ThemedText>
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={[styles.textInput, { backgroundColor: inputBgColor, borderColor, color: textColor }]}
-            placeholder="Enter text to translate"
+            placeholder="Enter text or scan image"
             placeholderTextColor={placeholderColor}
             onChangeText={setTextToTranslate}
             value={textToTranslate}
             multiline
           />
+          {isTranscribing && (
+            <View style={styles.transcribingOverlay}>
+              <ActivityIndicator size="small" color={textColor} />
+              <Text style={[styles.transcribingText, { color: textColor }]}>Transcribing...</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.inputContainer}>
@@ -173,7 +278,7 @@ export default function TranslateScreen() {
         <Button 
           title="Traducir y Guardar" 
           onPress={handleTranslate} 
-          disabled={isLoading || !textToTranslate || (!canTranslate && !isAdmin)} 
+          disabled={isLoading || isTranscribing || !textToTranslate || (!canTranslate && !isAdmin)} 
         />
         
         {isLoading && <ActivityIndicator size="large" color="#0000ff" style={styles.activityIndicator} />}
@@ -236,6 +341,21 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginBottom: 16,
   },
+  inputHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cameraButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 4,
+  },
+  cameraButtonText: {
+    marginLeft: 4,
+    fontSize: 14,
+  },
   textInput: {
     borderWidth: 1,
     borderRadius: 8,
@@ -265,5 +385,55 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     marginTop: 16,
-  }
+  },
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraControls: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingBottom: 40,
+  },
+  captureButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  captureButtonInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'white',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    padding: 10,
+  },
+  transcribingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  transcribingText: {
+    marginTop: 8,
+    fontWeight: 'bold',
+  },
 });
